@@ -114,6 +114,18 @@ class DelegatedSubAgent:
         plan = self.planner.build_plan(intent)
         self.logger.log("agent_plan", {"actions": [a.to_dict() for a in plan]})
 
+        # Submit the delegated plan to ArmorIQ before any action executes.
+        token_id = self.armorclaw.sign_plan(user_prompt, intent.intent, plan)
+        self.logger.log(
+            "armoriq_plan_signed",
+            {
+                "token_id":     token_id,
+                "verified_by":  "armoriq_api" if token_id else "local_fallback",
+                "plan_actions": [a.type.value for a in plan],
+                "delegated_by": self.delegation_scope.delegated_by,
+            },
+        )
+
         outcomes: List[Dict[str, object]] = []
         for action in plan:
             outcomes.append(self._process_action(action, intent.intent))

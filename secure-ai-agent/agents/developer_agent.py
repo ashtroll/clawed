@@ -57,6 +57,18 @@ class SecureDeveloperAgent:
         plan = self.planner.build_plan(intent)
         self.logger.log("agent_plan", {"actions": [a.to_dict() for a in plan]})
 
+        # Submit the full plan to ArmorIQ before any action executes.
+        # Returns a token_id when the API is configured, None when falling back.
+        token_id = self.armorclaw.sign_plan(user_prompt, intent.intent, plan)
+        self.logger.log(
+            "armoriq_plan_signed",
+            {
+                "token_id":     token_id,
+                "verified_by":  "armoriq_api" if token_id else "local_fallback",
+                "plan_actions": [a.type.value for a in plan],
+            },
+        )
+
         outcomes: List[Dict[str, object]] = []
         for action in plan:
             outcomes.append(self._process_action(action, intent.intent))

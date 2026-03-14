@@ -1,167 +1,194 @@
-"""ArmorClaw intent verification client.
+"""ArmorIQ intent verification — powered by the official armoriq-sdk.
 
-Sends each proposed action + its declared intent to the ArmorClaw enforcement
-API for independent runtime validation before the executor fires.
+Two-phase enforcement per run:
 
-When the API is unavailable (no key or network error) the client falls back to
-a local structured intent-alignment check that verifies the action type is
-consistent with the declared intent—ensuring enforcement is never silently
-skipped.
+  Phase 1  sign_plan(prompt, intent, actions)
+           Submits the full action plan to ArmorIQ before a single action
+           executes.  ArmorIQ returns a cryptographically signed IntentToken
+           whose plan_hash commits to every step.
+
+  Phase 2  verify_action(action, intent_name)
+           Checks each action against the signed token before execution.
+           Any action whose type was not in the signed plan is rejected with
+           an IntentMismatch verdict.
+
+When ARMORIQ_API_KEY is not set the client falls back to a deterministic
+local intent-alignment check so enforcement is never silently skipped.
 """
 from __future__ import annotations
 
-import json
 import os
 import uuid
-from dataclasses import dataclass
-from typing import Any
-from urllib import error, request
+from dataclasses import dataclass, field
+from typing import List, Optional
 
 from models.action_schema import Action, ActionType
-from models.policy_schema import Policy
 
 
 @dataclass(frozen=True)
 class ArmorClawDecision:
-    """Immutable verdict returned by ArmorClaw (API or local fallback)."""
+    """Immutable verdict returned by ArmorIQ (API or local fallback)."""
 
     approved: bool
     reason: str
-    verified_by: str  # "armorclaw_api" | "local_fallback"
+    verified_by: str  # "armoriq_api" | "local_fallback"
     trace_id: str = ""
+    plan_hash: str = ""
 
 
-# Maps each intent name to the action types that are semantically consistent
-# with that intent.  Any action whose type is absent from this set is
-# considered intent-misaligned and will be rejected.
+# Local intent-alignment map used when the API is unavailable.
 _INTENT_ALLOWED_TYPES: dict[str, set[ActionType]] = {
-    "project_cleanup": {
-        ActionType.DELETE,
-        ActionType.CLEAN_DIRECTORY,
-        ActionType.RUN_COMMAND,         # formatters are part of cleanup
-    },
-    "code_quality_maintenance": {
-        ActionType.RUN_COMMAND,
-    },
-    "project_reorganization": {
-        ActionType.MOVE,
-        ActionType.CLEAN_DIRECTORY,
-    },
-    "commit_message_generation": {
-        ActionType.GENERATE_COMMIT_MESSAGE,
-    },
-    "generic_project_operation": set(ActionType),   # all types permitted
+    "project_cleanup":          {ActionType.DELETE, ActionType.CLEAN_DIRECTORY, ActionType.RUN_COMMAND},
+    "code_quality_maintenance": {ActionType.RUN_COMMAND},
+    "project_reorganization":   {ActionType.MOVE, ActionType.CLEAN_DIRECTORY},
+    "commit_message_generation":{ActionType.GENERATE_COMMIT_MESSAGE},
+    "generic_project_operation": set(ActionType),
 }
 
 
 class ArmorClawClient:
     """
-    Verifies that each planned action is aligned with the declared user intent.
-
-    Two-tier enforcement:
-    1. Live API call when ARMORCLAW_API_KEY is configured.
-    2. Deterministic local fallback when credentials are absent or the request
-       fails—guaranteeing the enforcement layer is never bypassed.
+    ArmorIQ intent verification client.
 
     Environment variables
     ---------------------
-    ARMORCLAW_API_KEY   Required for live API verification.
-    ARMORCLAW_BASE_URL  Optional custom endpoint (default: https://api.armorclaw.io/v1).
+    ARMORIQ_API_KEY    Required for live ArmorIQ verification.
+    ARMORIQ_USER_ID    User identifier sent to ArmorIQ (default: clawed-user).
+    ARMORIQ_AGENT_ID   Agent identifier sent to ArmorIQ (default: clawed-agent).
     """
 
     def __init__(self) -> None:
-        self.api_key = os.getenv("ARMORCLAW_API_KEY", "").strip()
-        self.base_url = (
-            os.getenv("ARMORCLAW_BASE_URL", "https://api.armorclaw.io/v1")
-            .strip()
-            .rstrip("/")
-        )
+        self.api_key  = os.getenv("ARMORIQ_API_KEY", "").strip()
+        self.user_id  = os.getenv("ARMORIQ_USER_ID",  "clawed-user")
+        self.agent_id = os.getenv("ARMORIQ_AGENT_ID", "clawed-developer-agent")
+
+        # Set by sign_plan(); used by verify_action()
+        self._token: Optional[object]    = None
+        self._signed_types: List[str]    = []
 
     @property
     def is_configured(self) -> bool:
         return bool(self.api_key)
 
-    def validate(
+    # ------------------------------------------------------------------
+    # Phase 1 — sign the plan
+    # ------------------------------------------------------------------
+
+    def sign_plan(
         self,
-        action: Action,
+        prompt: str,
         intent_name: str,
-        policy: Policy,
-    ) -> ArmorClawDecision:
-        """Return an ArmorClaw verdict for the (action, intent, policy) triple."""
+        actions: List[Action],
+    ) -> Optional[str]:
+        """
+        Submit the full action plan to ArmorIQ and receive a signed IntentToken.
+
+        Returns the token_id string on success, or None when unconfigured /
+        the API call fails.  The token is stored internally for verify_action().
+        """
         if not self.is_configured:
-            return self._local_fallback(action, intent_name)
+            return None
 
         try:
-            return self._api_validate(action, intent_name, policy)
-        except RuntimeError:
-            # Network or parse error → fall back rather than blocking silently.
-            return self._local_fallback(action, intent_name)
+            from armoriq_sdk import ArmorIQClient  # type: ignore
+
+            steps = [
+                {
+                    "action": a.type.value,
+                    "mcp":    "clawed-executor",
+                    "params": {k: v for k, v in a.to_dict().items() if v is not None},
+                }
+                for a in actions
+            ]
+
+            with ArmorIQClient(
+                api_key=self.api_key,
+                user_id=self.user_id,
+                agent_id=self.agent_id,
+            ) as client:
+                plan_capture = client.capture_plan(
+                    llm="clawed-agent",
+                    prompt=prompt,
+                    plan={"goal": intent_name, "steps": steps},
+                )
+                self._token = client.get_intent_token(
+                    plan_capture, validity_seconds=120
+                )
+
+            self._signed_types = [s["action"] for s in steps]
+            return self._token.token_id  # type: ignore[union-attr]
+
+        except Exception:
+            self._token = None
+            self._signed_types = []
+            return None
+
+    # ------------------------------------------------------------------
+    # Phase 2 — verify each action
+    # ------------------------------------------------------------------
+
+    def verify_action(self, action: Action, intent_name: str) -> ArmorClawDecision:
+        """
+        Verify a single action.
+
+        Uses the ArmorIQ-signed token when available; otherwise runs the
+        local intent-alignment fallback.
+        """
+        if self._token is not None:
+            return self._token_verify(action)
+        return self._local_fallback(action, intent_name)
+
+    # keep the old validate() name so existing call sites still work
+    def validate(self, action: Action, intent_name: str, policy=None) -> ArmorClawDecision:
+        return self.verify_action(action, intent_name)
 
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _api_validate(
-        self,
-        action: Action,
-        intent_name: str,
-        policy: Policy,
-    ) -> ArmorClawDecision:
-        """POST to the ArmorClaw /verify endpoint and parse the response."""
-        payload: dict[str, Any] = {
-            "action": action.to_dict(),
-            "intent": intent_name,
-            "policy": {
-                "project_root": policy.project_root,
-                "allowed_directories": policy.allowed_directories,
-                "protected_files": policy.protected_files,
-                "protected_directories": policy.protected_directories,
-                "allowed_commands": policy.allowed_commands,
-                "blocked_commands": policy.blocked_commands,
-            },
-        }
+    def _token_verify(self, action: Action) -> ArmorClawDecision:
+        token = self._token
+        plan_hash = getattr(token, "plan_hash", "")
+        token_id  = getattr(token, "token_id",  str(uuid.uuid4()))
 
-        data = json.dumps(payload).encode("utf-8")
-        req = request.Request(
-            url=f"{self.base_url}/verify",
-            data=data,
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            },
-            method="POST",
-        )
+        if getattr(token, "is_expired", False):
+            return ArmorClawDecision(
+                approved=False,
+                reason="ArmorIQ intent token has expired",
+                verified_by="armoriq_api",
+                trace_id=token_id,
+                plan_hash=plan_hash,
+            )
 
-        try:
-            with request.urlopen(req, timeout=10) as response:
-                raw = response.read().decode("utf-8")
-        except error.URLError as exc:
-            raise RuntimeError(f"ArmorClaw API request failed: {exc}") from exc
-
-        try:
-            result = json.loads(raw)
-        except json.JSONDecodeError as exc:
-            raise RuntimeError("ArmorClaw returned invalid JSON") from exc
+        if action.type.value in self._signed_types:
+            return ArmorClawDecision(
+                approved=True,
+                reason=(
+                    f"Action '{action.type.value}' verified against ArmorIQ "
+                    f"signed intent token (plan_hash: {plan_hash[:16]}…)"
+                ),
+                verified_by="armoriq_api",
+                trace_id=token_id,
+                plan_hash=plan_hash,
+            )
 
         return ArmorClawDecision(
-            approved=bool(result.get("approved", False)),
-            reason=str(result.get("reason", "")),
-            verified_by="armorclaw_api",
-            trace_id=str(result.get("trace_id", "")),
+            approved=False,
+            reason=(
+                f"IntentMismatch — '{action.type.value}' was not in the "
+                f"ArmorIQ-signed plan (token: {token_id})"
+            ),
+            verified_by="armoriq_api",
+            trace_id=token_id,
+            plan_hash=plan_hash,
         )
 
     @staticmethod
     def _local_fallback(action: Action, intent_name: str) -> ArmorClawDecision:
-        """
-        Deterministic intent-alignment check used when the API is unavailable.
+        """Deterministic intent-alignment check used when no API key is set."""
+        allowed = _INTENT_ALLOWED_TYPES.get(intent_name, set())
 
-        Checks that the action type is semantically consistent with the
-        declared intent—catching cases where a planning layer tries to
-        smuggle an action type outside the user's stated goal.
-        """
-        allowed_types = _INTENT_ALLOWED_TYPES.get(intent_name, set())
-
-        if action.type not in allowed_types:
+        if action.type not in allowed:
             return ArmorClawDecision(
                 approved=False,
                 reason=(
