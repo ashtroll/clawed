@@ -10,6 +10,15 @@ PROJECT_ROOT = HERE.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# Load .env so ARMORIQ_API_KEY is set before any module imports it
+import os as _os
+_env = PROJECT_ROOT / ".env"
+if _env.exists():
+    for _l in _env.read_text().splitlines():
+        if _l.strip() and not _l.startswith("#") and "=" in _l:
+            _k, _v = _l.split("=", 1)
+            _os.environ.setdefault(_k.strip(), _v.strip())
+
 from agents.developer_agent import SecureDeveloperAgent
 from agents.sub_agent import DelegatedSubAgent
 from models.delegation_schema import DelegationScope

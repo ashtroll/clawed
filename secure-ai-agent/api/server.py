@@ -1,9 +1,18 @@
 from __future__ import annotations
 
+import os
 import shutil
 import sys
 from pathlib import Path
 from typing import List, Optional
+
+# Load .env so ARMORIQ_API_KEY is available before any module imports it
+_env_file = Path(__file__).resolve().parent.parent / ".env"
+if _env_file.exists():
+    for _line in _env_file.read_text().splitlines():
+        if _line.strip() and not _line.startswith("#") and "=" in _line:
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip())
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
