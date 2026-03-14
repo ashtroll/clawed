@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clawed — Secure Agent</title>
+  <style>
+    :root {
+      --bg:        #080c14;
+      --surface:   #0d1526;
+      --card:      #111827;
+      --card-hi:   #1a2540;
+      --border:    #1e2d45;
+      --border-lo: #243450;
+      --text:      #e2e8f0;
+      --text-2:    #94a3b8;
+      --text-3:    #64748b;
+      --blue:      #3b82f6;
+      --cyan:      #06b6d4;
+      --green:     #22c55e;
+      --red:       #ef4444;
+      --orange:    #f59e0b;
+      --purple:    #a855f7;
+      --yellow:    #eab308;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 10px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: 'Courier New', monospace;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 5px;
+      color: var(--cyan);
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text-3);
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+
+    .hbadges { margin-left: auto; display: flex; gap: 8px; }
+
+    .hbadge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .hbadge.armor {
+      background: rgba(6,182,212,.12);
+      color: var(--cyan);
+      border: 1px solid rgba(6,182,212,.3);
+    }
+
+    .hbadge.claw {
+      background: rgba(59,130,246,.12);
+      color: var(--blue);
+      border: 1px solid rgba(59,130,246,.3);
+    }
+
+    /* ── Layout ──────────────────────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────── */
+    aside {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-3);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .field { display: flex; flex-direction: column; gap: 4px; }
+
+    .field label {
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    input[type="text"], textarea, select {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 9px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      width: 100%;
+      transition: border-color .15s;
+      resize: vertical;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus { outline: none; border-color: var(--blue); }
+
+    textarea { min-height: 52px; }
+
+    /* ── Buttons ─────────────────────────────────────────────── */
+    .btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .4px;
+      transition: opacity .15s, background .15s;
+    }
+
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn:not(:disabled):hover { opacity: .85; }
+
+    .btn-primary  { background: var(--blue);   color: #fff; }
+    .btn-ghost    { background: var(--card);    color: var(--text-2); border: 1px solid var(--border); font-size: 11px; padding: 6px 11px; }
+    .btn-setup    { background: rgba(6,182,212,.12); color: var(--cyan); border: 1px solid rgba(6,182,212,.3); width: 100%; }
+    .btn-delegate { background: rgba(168,85,247,.12); color: var(--purple); border: 1px solid rgba(168,85,247,.3); }
+
+    .divider { height: 1px; background: var(--border); }
+
+    /* ── Delegation toggle ───────────────────────────────────── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .switch {
+      width: 34px; height: 18px;
+      background: var(--border);
+      border-radius: 9px;
+      position: relative;
+      transition: background .2s;
+      flex-shrink: 0;
+    }
+
+    .switch.on { background: var(--purple); }
+
+    .switch::after {
+      content: '';
+      position: absolute;
+      width: 12px; height: 12px;
+      background: #fff;
+      border-radius: 50%;
+      top: 3px; left: 3px;
+      transition: left .2s;
+    }
+
+    .switch.on::after { left: 19px; }
+
+    .del-config { display: none; flex-direction: column; gap: 8px; }
+    .del-config.open { display: flex; }
+
+    .cb-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+
+    .cb-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 7px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      cursor: pointer;
+      font-size: 10px;
+      color: var(--text-2);
+      font-family: 'Courier New', monospace;
+    }
+
+    .cb-item:hover { border-color: var(--purple); }
+    .cb-item input { accent-color: var(--purple); }
+
+    /* ── Main ────────────────────────────────────────────────── */
+    main {
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 14px;
+      overflow: hidden;
+    }
+
+    .prompt-wrap { flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+
+    .prompt-input {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 7px;
+      padding: 11px 14px;
+      font-size: 13px;
+      font-family: inherit;
+      resize: none;
+      height: 72px;
+      width: 100%;
+      transition: border-color .15s;
+    }
+
+    .prompt-input:focus { outline: none; border-color: var(--blue); }
+
+    .run-row { display: flex; gap: 8px; align-items: center; }
+
+    /* ── Results ─────────────────────────────────────────────── */
+    .results {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* placeholder */
+    .empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--text-3);
+    }
+
+    .empty-icon { font-size: 44px; opacity: .3; }
+
+    /* cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .card-head {
+      padding: 9px 14px;
+      background: rgba(255,255,255,.02);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: var(--text-2);
+    }
+
+    .card-body { padding: 14px; }
+
+    /* intent */
+    .intent-name {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--cyan);
+      font-family: 'Courier New', monospace;
+      margin-bottom: 5px;
+    }
+
+    .intent-summary {
+      color: var(--text-2);
+      font-size: 12px;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+
+    .chip {
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      background: rgba(59,130,246,.12);
+      color: var(--blue);
+      border: 1px solid rgba(59,130,246,.25);
+      font-family: 'Courier New', monospace;
+    }
+
+    /* mode badge */
+    .mode-badge {
+      margin-left: auto;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .mode-main      { background: rgba(6,182,212,.15); color: var(--cyan); }
+    .mode-delegated { background: rgba(168,85,247,.15); color: var(--purple); }
+
+    /* pipeline vis */
+    .pipe-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 10px 14px;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .pipe-node {
+      padding: 5px 11px;
+      border-radius: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      border: 1px solid var(--border);
+      color: var(--text-3);
+      white-space: nowrap;
+    }
+
+    .pipe-node.active {
+      color: var(--cyan);
+      border-color: rgba(6,182,212,.4);
+      background: rgba(6,182,212,.07);
+    }
+
+    .pipe-node.del.active {
+      color: var(--purple);
+      border-color: rgba(168,85,247,.4);
+      background: rgba(168,85,247,.07);
+    }
+
+    .pipe-arrow { color: var(--border); font-size: 11px; }
+
+    .summary-row {
+      display: flex;
+      gap: 20px;
+      padding: 8px 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .stat { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+    }
+
+    .dot.g { background: var(--green); }
+    .dot.r { background: var(--red); }
+
+    /* outcomes */
+    .outcome {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 11px 12px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      margin-bottom: 7px;
+      opacity: 0;
+      animation: fadeUp .3s ease forwards;
+    }
+
+    .outcome:last-child { margin-bottom: 0; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .outcome.ok  { border-left: 3px solid var(--green); background: rgba(34,197,94,.04); }
+    .outcome.bad { border-left: 3px solid var(--red);   background: rgba(239,68,68,.04); }
+
+    .oi { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    .ob { flex: 1; min-width: 0; }
+
+    .ot {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 3px;
+    }
+
+    .atype {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .apath {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: var(--text-2);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 380px;
+    }
+
+    /* gate badges */
+    .gbadge {
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .5px;
+      white-space: nowrap;
+    }
+
+    .g-all_passed  { background: rgba(34,197,94,.18);  color: var(--green);  }
+    .g-local_policy{ background: rgba(59,130,246,.18);  color: var(--blue);   }
+    .g-armorclaw   { background: rgba(245,158,11,.18);  color: var(--orange); }
+    .g-delegation  { background: rgba(168,85,247,.18);  color: var(--purple); }
+    .g-unknown     { background: rgba(148,163,184,.12); color: var(--text-2); }
+
+    .oreason {
+      font-size: 11px;
+      color: var(--text-3);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    /* log accordion */
+    .accordion {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .acc-head {
+      padding: 9px 14px;
+      background: var(--card);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: var(--text-2);
+      user-select: none;
+    }
+
+    .acc-head:hover { background: var(--card-hi); }
+
+    .acc-body {
+      display: none;
+      background: #060a10;
+      border-top: 1px solid var(--border);
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    .acc-body.open { display: block; }
+
+    .log-row {
+      padding: 3px 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      color: var(--text-3);
+      border-bottom: 1px solid rgba(255,255,255,.02);
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.6;
+    }
+
+    .log-row:hover { background: rgba(255,255,255,.02); }
+    .log-stage { color: var(--cyan); font-weight: 700; }
+
+    /* loading */
+    .loading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 24px;
+      color: var(--text-2);
+    }
+
+    .spin {
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .err {
+      background: rgba(239,68,68,.08);
+      border: 1px solid rgba(239,68,68,.3);
+      border-radius: 8px;
+      padding: 13px 15px;
+      color: var(--red);
+      font-size: 12px;
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────── -->
+<header>
+  <div>
+    <div class="logo">CLAWED</div>
+    <div class="logo-sub">Secure Developer Agent</div>
+  </div>
+  <div class="hbadges">
+    <span class="hbadge armor">ARMORIQ</span>
+    <span class="hbadge claw">OPENCLAW</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ── Sidebar ────────────────────────────────────────────────── -->
+  <aside>
+    <button class="btn btn-setup" onclick="setupDemo()">⚡ Setup Demo Project</button>
+
+    <div class="section-title">Policy Configuration</div>
+
+    <div class="field">
+      <label>Project Root</label>
+      <input type="text" id="project-root" placeholder="/absolute/path/to/project">
+    </div>
+
+    <div class="field">
+      <label>Allowed Directories (one per line)</label>
+      <textarea id="allowed-dirs" rows="2"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Protected Files (tokens)</label>
+      <textarea id="protected-files" rows="2">.env
+credentials
+secret
+keys</textarea>
+    </div>
+
+    <div class="field">
+      <label>Protected Directories (one per line)</label>
+      <textarea id="protected-dirs" rows="2"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Allowed Commands</label>
+      <textarea id="allowed-cmds" rows="3">python
+black
+ruff
+isort
+eslint
+git</textarea>
+    </div>
+
+    <div class="field">
+      <label>Blocked Commands</label>
+      <textarea id="blocked-cmds" rows="3">sudo
+chmod
+curl
+wget
+powershell
+cmd</textarea>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Delegation toggle -->
+    <div class="field">
+      <div class="toggle-row" onclick="toggleDelegation()">
+        <div class="switch" id="del-switch"></div>
+        <span style="color:var(--text-2);font-size:12px">Enable Delegation</span>
+        <span style="color:var(--purple);font-size:10px;font-weight:700;margin-left:auto">BONUS</span>
+      </div>
+    </div>
+
+    <div class="del-config" id="del-config">
+      <div class="section-title" style="color:var(--purple)">Delegation Scope</div>
+
+      <div class="field">
+        <label>Granted Action Types</label>
+        <div class="cb-grid" id="del-types">
+          <label class="cb-item"><input type="checkbox" value="delete"> delete</label>
+          <label class="cb-item"><input type="checkbox" value="clean_directory"> clean_dir</label>
+          <label class="cb-item"><input type="checkbox" value="run_command" checked> run_command</label>
+          <label class="cb-item"><input type="checkbox" value="move"> move</label>
+          <label class="cb-item"><input type="checkbox" value="generate_commit_message"> commit_msg</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Allowed Commands</label>
+        <textarea id="del-cmds" rows="2">python
+black
+ruff</textarea>
+      </div>
+
+      <div class="field">
+        <label>Delegation Reason</label>
+        <input type="text" id="del-reason" value="Format-only delegation">
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ───────────────────────────────────────────────────── -->
+  <main>
+    <div class="prompt-wrap">
+      <textarea class="prompt-input" id="prompt"
+        placeholder="Enter your prompt... e.g. 'Clean the project, delete temp files, and run formatting.'"></textarea>
+      <div class="run-row">
+        <button class="btn btn-primary" id="run-btn" onclick="runAgent()">▶ Run Agent</button>
+        <button class="btn btn-ghost" onclick="setPreset('Clean the project, delete temporary files, and run formatting.')">Demo 1</button>
+        <button class="btn btn-ghost" onclick="setPreset('Clean the project and run formatting.')">Demo 2</button>
+        <button class="btn btn-ghost" onclick="setPreset('Generate a commit message for current changes.')">Commit Msg</button>
+      </div>
+    </div>
+
+    <div class="results" id="results">
+      <div class="empty">
+        <div class="empty-icon">🔒</div>
+        <div style="font-size:13px;letter-spacing:1px">Configure policy, enter a prompt, run the agent</div>
+        <div style="font-size:11px">Click ⚡ Setup Demo Project to prefill everything</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  let delegationOn = false;
+
+  /* ── Helpers ────────────────────────────────────────────────── */
+
+  function lines(id) {
+    return document.getElementById(id).value.split('\n').map(s => s.trim()).filter(Boolean);
+  }
+
+  function setPreset(text) {
+    document.getElementById('prompt').value = text;
+    document.getElementById('prompt').focus();
+  }
+
+  function toggleDelegation() {
+    delegationOn = !delegationOn;
+    document.getElementById('del-switch').classList.toggle('on', delegationOn);
+    document.getElementById('del-config').classList.toggle('open', delegationOn);
+  }
+
+  function toggleAccordion(head) {
+    const body = head.nextElementSibling;
+    const open = body.classList.toggle('open');
+    head.querySelector('span').textContent = open ? '▲' : '▼';
+  }
+
+  /* ── Setup Demo ─────────────────────────────────────────────── */
+
+  async function setupDemo() {
+    const btn = document.querySelector('.btn-setup');
+    btn.textContent = '⏳ Setting up...';
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/setup-demo', { method: 'POST' });
+      if (!res.ok) throw new Error(await res.text());
+      const d = await res.json();
+
+      document.getElementById('project-root').value = d.project_root;
+      document.getElementById('allowed-dirs').value  = d.allowed_directories.join('\n');
+      document.getElementById('protected-files').value = d.protected_files.join('\n');
+      document.getElementById('protected-dirs').value  = d.protected_directories.join('\n');
+      document.getElementById('allowed-cmds').value    = d.allowed_commands.join('\n');
+      document.getElementById('blocked-cmds').value    = d.blocked_commands.join('\n');
+
+      btn.textContent = '✅ Demo Project Ready';
+    } catch (e) {
+      btn.textContent = '❌ Failed';
+      console.error(e);
+    }
+    setTimeout(() => { btn.textContent = '⚡ Setup Demo Project'; btn.disabled = false; }, 2500);
+  }
+
+  /* ── Run Agent ──────────────────────────────────────────────── */
+
+  async function runAgent() {
+    const prompt = document.getElementById('prompt').value.trim();
+    const root   = document.getElementById('project-root').value.trim();
+
+    if (!prompt) { document.getElementById('prompt').focus(); return; }
+    if (!root) { alert('Set a project root first (click ⚡ Setup Demo Project).'); return; }
+
+    const policy = {
+      project_root:         root,
+      allowed_directories:  lines('allowed-dirs'),
+      protected_files:      lines('protected-files'),
+      protected_directories:lines('protected-dirs'),
+      allowed_commands:     lines('allowed-cmds'),
+      blocked_commands:     lines('blocked-cmds'),
+    };
+
+    let delegation = null;
+    if (delegationOn) {
+      delegation = {
+        allowed_action_types: [...document.querySelectorAll('#del-types input:checked')].map(el => el.value),
+        allowed_commands:     lines('del-cmds'),
+        allowed_directories:  lines('allowed-dirs'),
+        reason: document.getElementById('del-reason').value,
+      };
+    }
+
+    const btn = document.getElementById('run-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Running...';
+
+    const results = document.getElementById('results');
+    results.innerHTML = '<div class="loading"><div class="spin"></div><span>Enforcing intent boundaries…</span></div>';
+
+    try {
+      const res = await fetch('/api/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, policy, delegation }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Unknown error');
+      }
+
+      renderResults(await res.json());
+    } catch (e) {
+      results.innerHTML = `<div class="err">❌ ${e.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '▶ Run Agent';
+    }
+  }
+
+  /* ── Render Results ─────────────────────────────────────────── */
+
+  function renderResults(d) {
+    const { mode, intent, outcomes, log_records } = d;
+    const allowed = outcomes.filter(o => o.status === 'executed').length;
+    const blocked = outcomes.filter(o => o.status === 'blocked').length;
+    const modeCls = mode === 'delegated' ? 'mode-delegated' : 'mode-main';
+    const modeLabel = mode === 'delegated' ? 'DELEGATED' : 'MAIN AGENT';
+
+    /* pipeline nodes */
+    const delNode = mode === 'delegated'
+      ? `<span class="pipe-node del active">🔐 DELEGATION</span><span class="pipe-arrow">→</span>`
+      : '';
+
+    document.getElementById('results').innerHTML = `
+
+      <!-- Intent -->
+      <div class="card">
+        <div class="card-head">
+          🎯 STRUCTURED INTENT
+          <span class="mode-badge ${modeCls}">${modeLabel}</span>
+        </div>
+        <div class="card-body">
+          <div class="intent-name">${esc(intent.intent)}</div>
+          <div class="intent-summary">${esc(intent.reasoning_summary)}</div>
+          <div class="chips">
+            ${intent.allowed_actions.map(a => `<span class="chip">${esc(a)}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Pipeline -->
+      <div class="card">
+        <div class="card-head">⚡ ENFORCEMENT PIPELINE</div>
+        <div class="pipe-row">
+          ${delNode}
+          <span class="pipe-node active">🛡 LOCAL POLICY</span>
+          <span class="pipe-arrow">→</span>
+          <span class="pipe-node active">🔮 ARMORCLAW</span>
+          <span class="pipe-arrow">→</span>
+          <span class="pipe-node active">⚡ EXECUTOR</span>
+        </div>
+        <div class="summary-row">
+          <div class="stat"><div class="dot g"></div>${allowed} executed</div>
+          <div class="stat"><div class="dot r"></div>${blocked} blocked</div>
+        </div>
+      </div>
+
+      <!-- Outcomes -->
+      <div class="card">
+        <div class="card-head">📋 EXECUTION OUTCOMES</div>
+        <div class="card-body">
+          ${outcomes.map((o, i) => renderOutcome(o, i)).join('')}
+        </div>
+      </div>
+
+      <!-- Audit trace -->
+      <div class="accordion">
+        <div class="acc-head" onclick="toggleAccordion(this)">
+          📄 AUDIT TRACE — ${log_records.length} records
+          <span>▼</span>
+        </div>
+        <div class="acc-body">
+          ${log_records.map(r => renderLogRow(r)).join('')}
+        </div>
+      </div>
+    `;
+
+    /* stagger outcome animations */
+    document.querySelectorAll('.outcome').forEach((el, i) => {
+      el.style.animationDelay = `${i * 70}ms`;
+    });
+  }
+
+  function renderOutcome(o, idx) {
+    const ok = o.status === 'executed';
+    const action = o.action;
+    const target = action.path || action.target || action.source
+      || (action.command ? action.command.join(' ') : '—');
+    const gate = o.gate || 'unknown';
+    const gLabel = gate.replace(/_/g, ' ').toUpperCase();
+
+    return `
+      <div class="outcome ${ok ? 'ok' : 'bad'}">
+        <div class="oi">${ok ? '✅' : '❌'}</div>
+        <div class="ob">
+          <div class="ot">
+            <span class="atype">${esc(action.type.toUpperCase())}</span>
+            <span class="apath" title="${esc(target)}">${esc(shorten(target, 60))}</span>
+            <span class="gbadge g-${gate}">${gLabel}</span>
+          </div>
+          ${!ok ? `<div class="oreason">${esc(o.reason || '')}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderLogRow(r) {
+    const payload = JSON.stringify(r.payload);
+    const preview = payload.length > 200 ? payload.slice(0, 200) + '…' : payload;
+    return `<div class="log-row"><span class="log-stage">[${r.stage.toUpperCase()}]</span> ${esc(preview)}</div>`;
+  }
+
+  /* ── Utils ──────────────────────────────────────────────────── */
+
+  function esc(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function shorten(str, max) {
+    if (str.length <= max) return str;
+    return '…' + str.slice(-(max - 1));
+  }
+
+  /* Enter key in prompt */
+  document.getElementById('prompt').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runAgent(); }
+  });
+</script>
+</body>
+</html>
