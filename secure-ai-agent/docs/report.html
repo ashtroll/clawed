@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Clawed — Submission Report</title>
+  <style>
+    @page { size: A4; margin: 0; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 794px;
+      background: #ffffff;
+      font-family: 'Segoe UI', Georgia, serif;
+      color: #1e293b;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    .cover {
+      background: linear-gradient(150deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%);
+      color: white;
+      padding: 48px 50px 40px;
+    }
+
+    .cover-tag {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #38bdf8;
+      margin-bottom: 14px;
+    }
+
+    .cover-title {
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: 6px;
+      font-family: 'Courier New', monospace;
+      color: #38bdf8;
+    }
+
+    .cover-subtitle {
+      font-size: 15px;
+      color: #94a3b8;
+      margin-top: 6px;
+      font-weight: 300;
+    }
+
+    .cover-meta {
+      margin-top: 28px;
+      display: flex;
+      gap: 24px;
+    }
+
+    .meta-item {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 11px;
+    }
+
+    .meta-label {
+      color: #64748b;
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .meta-value {
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+
+    /* ── Body ────────────────────────────────────────────── */
+    .content {
+      padding: 36px 50px 40px;
+    }
+
+    h2 {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #0f172a;
+      margin-top: 28px;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h2:first-child { margin-top: 0; }
+
+    .num-badge {
+      background: #0f172a;
+      color: #38bdf8;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-size: 10px;
+      font-weight: 900;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    p { margin-bottom: 10px; color: #334155; }
+
+    ul { margin: 8px 0 10px 20px; }
+    li { margin-bottom: 5px; color: #334155; }
+
+    strong { color: #0f172a; font-weight: 700; }
+
+    /* code/schema blocks */
+    .schema {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 3px solid #38bdf8;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin: 10px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 10.5px;
+      line-height: 1.6;
+      color: #334155;
+      white-space: pre;
+    }
+
+    /* callout boxes */
+    .callout {
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin: 12px 0;
+      border: 1px solid transparent;
+    }
+
+    .callout-blue {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+    }
+
+    .callout-green {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
+    .callout-amber {
+      background: #fffbeb;
+      border-color: #fde68a;
+    }
+
+    .callout-purple {
+      background: #faf5ff;
+      border-color: #e9d5ff;
+    }
+
+    .callout-title {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .ct-blue   { color: #1d4ed8; }
+    .ct-green  { color: #15803d; }
+    .ct-amber  { color: #b45309; }
+    .ct-purple { color: #7e22ce; }
+
+    .callout p { margin: 0; font-size: 12px; }
+
+    /* table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 11.5px;
+    }
+
+    th {
+      background: #0f172a;
+      color: #38bdf8;
+      padding: 7px 12px;
+      text-align: left;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    td {
+      padding: 7px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #334155;
+    }
+
+    tr:nth-child(even) td { background: #f8fafc; }
+
+    /* ── Footer ──────────────────────────────────────────── */
+    .footer {
+      background: #f1f5f9;
+      border-top: 1px solid #e2e8f0;
+      padding: 10px 50px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .footer span { font-size: 9px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+<!-- Cover -->
+<div class="cover">
+  <div class="cover-tag">ArmorIQ × OpenClaw Hackathon · Submission Document</div>
+  <div class="cover-title">CLAWED</div>
+  <div class="cover-subtitle">Intent-Aware Enforcement for Autonomous Developer Agents</div>
+  <div class="cover-meta">
+    <div class="meta-item">
+      <div class="meta-label">Category</div>
+      <div class="meta-value">Developer Tooling</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Stack</div>
+      <div class="meta-value">Python · FastAPI · OpenClaw · ArmorClaw</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Delegation</div>
+      <div class="meta-value">Implemented ✓</div>
+    </div>
+  </div>
+</div>
+
+<!-- Content -->
+<div class="content">
+
+  <!-- 1. Introduction -->
+  <h2><span class="num-badge">1</span> Introduction</h2>
+
+  <p>
+    Autonomous agents that operate directly on a developer's local system introduce a category of risk that conversational AI does not. When an agent can delete files, execute commands, and reorganize directories, an ambiguous instruction like <em>"clean this up"</em> is no longer a safe experiment — it is a live operation on real infrastructure.
+  </p>
+  <p>
+    <strong>Clawed</strong> is a secure autonomous developer assistant built to demonstrate that autonomy and trustworthiness are not mutually exclusive. Rather than building a more capable agent, the focus is on building a more <em>accountable</em> one. Every action the system proposes is evaluated against two independent enforcement layers before a single byte is touched on disk. If either layer objects, the action is stopped, logged, and the reason is recorded.
+  </p>
+  <p>
+    The system targets a realistic and high-frequency developer scenario: routine project maintenance. Clawed can delete temporary files, run code formatters, reorganize directories, and generate commit messages — but only within boundaries the user explicitly defines.
+  </p>
+
+  <!-- 2. Architecture -->
+  <h2><span class="num-badge">2</span> System Architecture</h2>
+
+  <p>
+    Clawed is organized as a seven-layer pipeline. Each layer has a single, well-defined responsibility, and no layer bypasses the ones beneath it.
+  </p>
+
+  <table>
+    <tr>
+      <th>Layer</th>
+      <th>Component</th>
+      <th>Role</th>
+    </tr>
+    <tr><td>1</td><td>Reasoning Layer</td><td>Infers intent category from the user's natural-language prompt</td></tr>
+    <tr><td>2</td><td>Intent Parser</td><td>Produces a validated <code>StructuredIntent</code> schema object</td></tr>
+    <tr><td>3</td><td>Action Planner</td><td>Converts the intent into a list of typed, atomic <code>Action</code> objects</td></tr>
+    <tr><td>4a</td><td>Delegation Gate</td><td>Confirms the action type is within the sub-agent's granted scope (delegation path only)</td></tr>
+    <tr><td>4b</td><td>Local PolicyEngine</td><td>Validates path bounds, file protections, and command allow/deny lists</td></tr>
+    <tr><td>4c</td><td>ArmorClaw Verifier</td><td>Independently confirms the action is semantically aligned with the declared intent</td></tr>
+    <tr><td>5</td><td>OpenClaw Executor</td><td>Carries out approved actions on the filesystem or via subprocess</td></tr>
+    <tr><td>6</td><td>Audit Logger</td><td>Records every stage decision to an immutable JSONL trace</td></tr>
+  </table>
+
+  <div class="callout callout-blue">
+    <div class="callout-title ct-blue">Key Design Principle</div>
+    <p>The executor has no awareness of policy or intent. It receives only pre-approved action objects. Reasoning and execution are entirely separate modules that share no state.</p>
+  </div>
+
+  <!-- 3. Intent Model -->
+  <h2><span class="num-badge">3</span> Intent Model</h2>
+
+  <p>
+    When a user submits a prompt, the Reasoning Layer translates it into a named intent category using an OpenAI-compatible JSON adapter. When API credentials are absent, a deterministic keyword-matching fallback activates instead — ensuring the intent validation step is never silently skipped. The result is structured into a <strong>StructuredIntent</strong> dataclass:
+  </p>
+
+  <div class="schema">{
+  "intent":           "project_cleanup",
+  "target_directory": "/home/user/project",
+  "allowed_actions":  ["delete_temp_files", "format_code"],
+  "raw_prompt":       "Clean the project and run formatting.",
+  "reasoning_summary":"User asked to remove temporary artifacts..."
+}</div>
+
+  <p>
+    The <code>intent</code> field is constrained to one of five named categories: <code>project_cleanup</code>, <code>code_quality_maintenance</code>, <code>project_reorganization</code>, <code>commit_message_generation</code>, and <code>generic_project_operation</code>. The planner uses the <code>allowed_actions</code> list — not the raw prompt — to generate the action plan, ensuring a clear semantic boundary between what the user said and what the system will attempt to do.
+  </p>
+
+  <div class="callout callout-amber">
+    <div class="callout-title ct-amber">Not a hardcoded check</div>
+    <p>Intent is captured as a typed, validated schema and consumed by downstream components as structured data. The planner does not inspect the raw prompt. This ensures the enforcement chain operates on well-formed inputs, not free-form text.</p>
+  </div>
+
+  <!-- 4. Policy Model -->
+  <h2><span class="num-badge">4</span> Policy Model</h2>
+
+  <p>
+    The Policy dataclass encodes all runtime constraints as an immutable (<code>frozen=True</code>) configuration object. It is constructed once per run and passed to every enforcement component, eliminating any possibility of runtime modification.
+  </p>
+
+  <div class="schema">{
+  "project_root":          "./project",
+  "allowed_directories":   ["./project"],
+  "protected_files":       [".env", "credentials", "secret", "keys"],
+  "protected_directories": ["./project/config", "./project/database"],
+  "allowed_commands":      ["python", "black", "ruff", "git"],
+  "blocked_commands":      ["sudo", "chmod", "curl", "wget"],
+  "blocked_substrings":    ["&&", ";", "|", "`", "$("],
+  "max_command_runtime_seconds": 20
+}</div>
+
+  <p>The policy covers the following constraint categories:</p>
+  <ul>
+    <li><strong>Directory-scoped access</strong> — all file paths must resolve within <code>project_root</code> and <code>allowed_directories</code></li>
+    <li><strong>Content restrictions</strong> — filenames containing tokens like <code>.env</code> or <code>secret</code> are blocked regardless of path</li>
+    <li><strong>Command restrictions</strong> — executables are validated against both an allow-list and a deny-list</li>
+    <li><strong>Injection prevention</strong> — shell metacharacters are scanned across the full command string</li>
+    <li><strong>Time-based restriction</strong> — subprocess calls are terminated after a configurable timeout</li>
+  </ul>
+
+  <!-- 5. Enforcement -->
+  <h2><span class="num-badge">5</span> Enforcement Mechanism</h2>
+
+  <p>
+    Every action produced by the planner must pass two independent enforcement gates before reaching the executor. Both must approve. Either can block independently, and the reason is always recorded.
+  </p>
+
+  <div class="callout callout-amber">
+    <div class="callout-title ct-amber">Gate 1 — Local PolicyEngine</div>
+    <p>
+      Performs structural safety checks: path canonicalization against project boundaries, protected file token matching, command allow/deny list evaluation, and shell metacharacter detection. Produces a <code>PolicyDecision(allowed: bool, reason: str)</code>.
+    </p>
+  </div>
+
+  <div class="callout callout-green">
+    <div class="callout-title ct-green">Gate 2 — ArmorClaw Verifier</div>
+    <p>
+      Performs independent intent-alignment verification. When <code>ARMORCLAW_API_KEY</code> is configured, the action is POSTed to the ArmorClaw endpoint. Without credentials, a local intent-alignment check runs deterministically, verifying that the action type is semantically consistent with the declared intent. A <code>DELETE</code> action is valid for <code>project_cleanup</code> but not for <code>commit_message_generation</code>. Produces an <code>ArmorClawDecision</code> with a unique <code>trace_id</code>.
+    </p>
+  </div>
+
+  <p>
+    The two gates ask fundamentally different questions. The local policy asks: <em>"Is this action structurally safe?"</em> ArmorClaw asks: <em>"Is this action semantically consistent with what the user asked for?"</em> An action can be structurally safe (a valid path, a permitted command) while still being intent-misaligned. Both checks are necessary.
+  </p>
+
+  <!-- 6. Delegation -->
+  <h2><span class="num-badge">6</span> Bounded Delegation</h2>
+
+  <div class="callout callout-purple">
+    <div class="callout-title ct-purple">Delegation Bonus Feature</div>
+    <p>Clawed implements bounded delegation through a DelegatedSubAgent, earning the bonus consideration outlined in the rulebook.</p>
+  </div>
+
+  <p>
+    A parent agent can delegate a narrowly-scoped task to a <code>DelegatedSubAgent</code> by providing a <code>DelegationScope</code> object. The scope defines which action types the sub-agent may attempt, which commands it may run, and which directories it may access. At construction time, the scope is validated to be a strict subset of the parent's policy — it is structurally impossible to create a sub-agent with more authority than its parent.
+  </p>
+
+  <div class="schema">scope = DelegationScope(
+  allowed_action_types = ["run_command"],   # only formatters
+  allowed_commands     = ["python", "black", "ruff"],
+  delegated_by         = "SecureDeveloperAgent",
+  reason               = "Format-only delegation"
+)</div>
+
+  <p>
+    The sub-agent operates under a four-gate pipeline. The <strong>Delegation Gate</strong> fires first, before the local policy or ArmorClaw are consulted. Any action whose type is not in the granted scope is blocked immediately with a <code>gate: "delegation"</code> label. This means a sub-agent that plans a <code>DELETE</code> action will be stopped before any path checks or intent verification even begin — demonstrating that delegation enforcement is structurally independent from all other layers.
+  </p>
+
+  <!-- 7. Observability -->
+  <h2><span class="num-badge">7</span> Observability and Traceability</h2>
+
+  <p>
+    Every decision in the pipeline is logged by the <code>PipelineLogger</code> to a JSONL audit trace. Each record carries a UTC timestamp, a stage name, and the full decision payload. The <code>gate</code> field on every execution result identifies exactly which enforcement layer made the final decision:
+  </p>
+
+  <ul>
+    <li><code>gate: "delegation"</code> — stopped by the delegation scope check</li>
+    <li><code>gate: "local_policy"</code> — stopped by the structural policy engine</li>
+    <li><code>gate: "armorclaw"</code> — stopped by intent-alignment verification</li>
+    <li><code>gate: "all_passed"</code> — approved by all gates and executed</li>
+  </ul>
+
+  <p>
+    This tagging makes it straightforward to audit any run: for each action, the trace shows what was proposed, which gate evaluated it, what the decision was, and what the executor produced.
+  </p>
+
+  <!-- 8. Conclusion -->
+  <h2><span class="num-badge">8</span> Conclusion</h2>
+
+  <p>
+    Clawed demonstrates that intent-aware enforcement is not a theoretical concept — it is an engineering decision. By separating reasoning from planning, planning from enforcement, and enforcement from execution, the system ensures that no part of the pipeline can short-circuit the others. Ambiguous prompts do not reach the executor. Structurally valid but semantically misaligned actions are caught by ArmorClaw. Delegated sub-agents cannot exceed the authority they were given.
+  </p>
+  <p>
+    The result is an autonomous system that acts when it should, stops when it must, and always explains why.
+  </p>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span>Clawed — Secure Autonomous Developer Agent</span>
+  <span>ArmorIQ × OpenClaw Hackathon Submission</span>
+</div>
+
+</body>
+</html>

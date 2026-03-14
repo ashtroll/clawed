@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Clawed — Architecture Diagram</title>
+  <style>
+    @page { size: A4; margin: 0; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 794px;
+      min-height: 1123px;
+      background: #ffffff;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #1e293b;
+    }
+
+    /* ── Header ────────────────────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+      color: white;
+      padding: 28px 40px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left h1 {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 8px;
+      color: #38bdf8;
+      font-family: 'Courier New', monospace;
+    }
+
+    .header-left p {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+    }
+
+    .badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+    }
+
+    .badge-armor { background: rgba(56,189,248,.2); color: #38bdf8; border: 1px solid rgba(56,189,248,.4); }
+    .badge-claw  { background: rgba(99,102,241,.2); color: #818cf8; border: 1px solid rgba(99,102,241,.4); }
+
+    /* ── Page body ─────────────────────────────────────── */
+    .page-body {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 0;
+      padding: 24px 30px;
+    }
+
+    /* ── Pipeline (left column) ────────────────────────── */
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    .node {
+      width: 320px;
+      border-radius: 10px;
+      padding: 11px 16px;
+      position: relative;
+      border: 2px solid transparent;
+    }
+
+    .node-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: .7;
+      margin-bottom: 2px;
+    }
+
+    .node-title {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .node-sub {
+      font-size: 10px;
+      opacity: .75;
+      margin-top: 2px;
+      font-style: italic;
+    }
+
+    /* node colours */
+    .n-user      { background: #f1f5f9; border-color: #cbd5e1; }
+    .n-reason    { background: #f5f3ff; border-color: #a78bfa; }
+    .n-intent    { background: #eff6ff; border-color: #93c5fd; }
+    .n-plan      { background: #ecfeff; border-color: #67e8f9; }
+    .n-executor  { background: #fff7ed; border-color: #fdba74; }
+    .n-logger    { background: #f8fafc; border-color: #94a3b8; }
+
+    .layer-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(0,0,0,.12);
+      font-size: 10px;
+      font-weight: 800;
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
+
+    .node-row {
+      display: flex;
+      align-items: flex-start;
+    }
+
+    /* arrows */
+    .arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #94a3b8;
+      font-size: 18px;
+      line-height: 1;
+      padding: 2px 0;
+    }
+
+    .arrow-line {
+      width: 2px;
+      height: 12px;
+      background: #cbd5e1;
+    }
+
+    .arrow-head {
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 8px solid #cbd5e1;
+    }
+
+    /* ── Enforcement section ───────────────────────────── */
+    .enforcement-wrap {
+      width: 320px;
+      border: 2px dashed #e2e8f0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+
+    .enforcement-title {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #64748b;
+      text-align: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 8px;
+    }
+
+    .gate-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 7px;
+    }
+
+    .gate-row:last-child { margin-bottom: 0; }
+
+    .gate-node {
+      flex: 1;
+      border-radius: 8px;
+      padding: 8px 12px;
+      border: 1px solid transparent;
+    }
+
+    .gate-title {
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .gate-sub {
+      font-size: 9px;
+      opacity: .7;
+      margin-top: 2px;
+      font-style: italic;
+    }
+
+    .g-delegation { background: #fdf4ff; border-color: #d8b4fe; }
+    .g-policy     { background: #fffbeb; border-color: #fcd34d; }
+    .g-armorclaw  { background: #f0fdf4; border-color: #86efac; }
+
+    .blocked-box {
+      width: 54px;
+      flex-shrink: 0;
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      border-radius: 6px;
+      padding: 4px 5px;
+      text-align: center;
+    }
+
+    .blocked-label {
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #dc2626;
+      text-transform: uppercase;
+    }
+
+    .blocked-reason {
+      font-size: 7.5px;
+      color: #ef4444;
+      line-height: 1.3;
+      margin-top: 2px;
+    }
+
+    .gate-arrow {
+      font-size: 11px;
+      color: #fca5a5;
+      font-weight: 700;
+    }
+
+    /* ── Right column ──────────────────────────────────── */
+    .right-col {
+      padding-left: 24px;
+      border-left: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .info-block {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+
+    .info-title {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    pre {
+      font-family: 'Courier New', monospace;
+      font-size: 8.5px;
+      line-height: 1.6;
+      color: #334155;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+      font-size: 11px;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* ── Footer ────────────────────────────────────────── */
+    .footer {
+      background: #f1f5f9;
+      border-top: 1px solid #e2e8f0;
+      padding: 10px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-text { font-size: 10px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <h1>CLAWED</h1>
+    <p>Secure Autonomous Developer Agent · Architecture Diagram</p>
+  </div>
+  <div class="header-right">
+    <span class="badge badge-armor">ARMORIQ</span>
+    <span class="badge badge-claw">OPENCLAW</span>
+  </div>
+</div>
+
+<!-- Main Body -->
+<div class="page-body">
+
+  <!-- Left: Pipeline -->
+  <div class="pipeline">
+
+    <!-- User Prompt -->
+    <div class="node n-user">
+      <div class="node-label">Input</div>
+      <div class="node-row">
+        <div>
+          <div class="node-title">👤 User Prompt</div>
+          <div class="node-sub">"Clean the project and run formatting."</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- Layer 1 -->
+    <div class="node n-reason">
+      <div class="node-label">Layer 1 — Reasoning</div>
+      <div class="node-row">
+        <span class="layer-num">1</span>
+        <div>
+          <div class="node-title">Reasoning Layer</div>
+          <div class="node-sub">LLM JSON adapter · deterministic fallback</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- Layer 2 -->
+    <div class="node n-intent">
+      <div class="node-label">Layer 2 — Intent Parsing</div>
+      <div class="node-row">
+        <span class="layer-num">2</span>
+        <div>
+          <div class="node-title">Intent Parser</div>
+          <div class="node-sub">Emits validated StructuredIntent schema</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- Layer 3 -->
+    <div class="node n-plan">
+      <div class="node-label">Layer 3 — Planning</div>
+      <div class="node-row">
+        <span class="layer-num">3</span>
+        <div>
+          <div class="node-title">Action Planner</div>
+          <div class="node-sub">Builds typed atomic Action objects</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- Enforcement Gates -->
+    <div class="enforcement-wrap">
+      <div class="enforcement-title">⚡ Enforcement Gates — Per Action</div>
+
+      <!-- Gate 4a -->
+      <div class="gate-row">
+        <div class="gate-node g-delegation">
+          <div class="gate-title">
+            <span class="layer-num" style="background:rgba(124,58,237,.15);color:#7c3aed">4a</span>
+            Delegation Gate
+          </div>
+          <div class="gate-sub">action.type ∈ DelegationScope? (sub-agent only)</div>
+        </div>
+        <span class="gate-arrow">→</span>
+        <div class="blocked-box">
+          <div class="blocked-label">BLOCKED</div>
+          <div class="blocked-reason">scope exceeded</div>
+        </div>
+      </div>
+
+      <!-- Gate 4b -->
+      <div class="gate-row">
+        <div class="gate-node g-policy">
+          <div class="gate-title">
+            <span class="layer-num" style="background:rgba(217,119,6,.15);color:#d97706">4b</span>
+            Local Policy Engine
+          </div>
+          <div class="gate-sub">path bounds · protected files · command allow-list</div>
+        </div>
+        <span class="gate-arrow">→</span>
+        <div class="blocked-box">
+          <div class="blocked-label">BLOCKED</div>
+          <div class="blocked-reason">policy violation</div>
+        </div>
+      </div>
+
+      <!-- Gate 4c -->
+      <div class="gate-row">
+        <div class="gate-node g-armorclaw">
+          <div class="gate-title">
+            <span class="layer-num" style="background:rgba(5,150,105,.15);color:#059669">4c</span>
+            ArmorClaw Verifier
+          </div>
+          <div class="gate-sub">intent alignment · API call or local fallback</div>
+        </div>
+        <span class="gate-arrow">→</span>
+        <div class="blocked-box">
+          <div class="blocked-label">BLOCKED</div>
+          <div class="blocked-reason">intent mismatch</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- Layer 5 -->
+    <div class="node n-executor">
+      <div class="node-label">Layer 5 — Execution</div>
+      <div class="node-row">
+        <span class="layer-num">5</span>
+        <div>
+          <div class="node-title">OpenClaw Executor</div>
+          <div class="node-sub">filesystem ops · subprocess (shell=False) · timeout</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- Layer 6 -->
+    <div class="node n-logger">
+      <div class="node-label">Layer 6 — Audit</div>
+      <div class="node-row">
+        <span class="layer-num">6</span>
+        <div>
+          <div class="node-title">Pipeline Logger</div>
+          <div class="node-sub">immutable JSONL trace · every stage logged</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /pipeline -->
+
+  <!-- Right column -->
+  <div class="right-col">
+
+    <!-- Legend -->
+    <div class="info-block">
+      <div class="info-title">Layer Legend</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div>Reasoning — intent inference</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#93c5fd"></div>Intent Parsing — structured schema</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#67e8f9"></div>Planning — atomic action list</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#d8b4fe"></div>Gate 4a — Delegation scope check</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fcd34d"></div>Gate 4b — Local policy enforcement</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#86efac"></div>Gate 4c — ArmorClaw verification</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fdba74"></div>Executor — real system actions</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#94a3b8"></div>Logger — audit traceability</div>
+    </div>
+
+    <!-- Schemas -->
+    <div class="info-block">
+      <div class="info-title">StructuredIntent Schema</div>
+<pre>{
+  "intent": "project_cleanup",
+  "target_directory": "./project",
+  "allowed_actions": [
+    "delete_temp_files",
+    "format_code"
+  ],
+  "reasoning_summary": "..."
+}</pre>
+    </div>
+
+    <div class="info-block">
+      <div class="info-title">Policy Schema</div>
+<pre>{
+  "project_root": "./project",
+  "allowed_dirs": ["./project"],
+  "protected_files": [".env","secret"],
+  "protected_dirs": ["./config"],
+  "allowed_commands": ["black","ruff"],
+  "blocked_commands": ["sudo","curl"],
+  "max_runtime_seconds": 20
+}</pre>
+    </div>
+
+    <div class="info-block">
+      <div class="info-title">ArmorClaw Decision</div>
+<pre>{
+  "approved": true,
+  "reason": "Action 'delete' is consistent
+    with intent 'project_cleanup'",
+  "verified_by": "local_fallback",
+  "trace_id": "1d9a3a6b-c28e-4387..."
+}</pre>
+    </div>
+
+    <div class="info-block">
+      <div class="info-title">DelegationScope</div>
+<pre>{
+  "allowed_action_types": ["run_command"],
+  "allowed_commands": ["black","ruff"],
+  "delegated_by": "SecureDeveloperAgent",
+  "reason": "Format-only delegation"
+}</pre>
+    </div>
+
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span class="footer-text">Clawed — Secure Autonomous Developer Agent</span>
+  <span class="footer-text">ArmorIQ × OpenClaw Hackathon Submission</span>
+</div>
+
+</body>
+</html>
