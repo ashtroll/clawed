@@ -1,59 +1,67 @@
-# Secure AI Agent (OpenClaw + ArmorClaw-style Policy)
+# Clawed — Secure Autonomous Developer Agent
 
-Production-style autonomous developer assistant with strict, deterministic runtime policy enforcement.
+**ArmorIQ × OpenClaw Hackathon 2025**
 
-## Core Goal
+Clawed is an intent-aware autonomous developer agent that enforces strict policy boundaries at runtime. Every action passes through a dual-gate enforcement stack before it reaches the system — making autonomous execution both capable and trustworthy.
 
-Enable autonomous project maintenance actions while preventing unsafe operations.
+## How It Works
 
-## Capabilities
+A user prompt flows through a 7-layer pipeline:
 
-Allowed actions include:
+1. **Reasoning** — infer structured intent from the prompt
+2. **Intent Parsing** — produce a validated `StructuredIntent` schema
+3. **Action Planning** — generate typed `Action` objects
+4. **Gate 4a — Delegation** — block actions outside the sub-agent's granted scope
+5. **Gate 4b — Local Policy** — enforce directory bounds, protected files, command lists
+6. **Gate 4c — ArmorIQ Verifier** — verify intent alignment via the ArmorIQ live API
+7. **Executor + Logger** — run approved actions and write an immutable JSONL audit trace
 
-- project cleanup
-- temporary file deletion
-- formatter/linter command execution
-- repository reorganization
-- commit message generation
+Reasoning never calls the executor directly. The enforcement stack cannot be bypassed.
 
-Blocked actions include:
+## Key Features
 
-- secret file access (for example .env)
-- protected directory modifications (for example config, database)
-- privileged or disallowed commands
-- path traversal outside project root
-
-## Architecture
-
-1. Reasoning Layer: interpret user prompt and infer intent type.
-2. Intent Parsing Layer: create strict structured intent schema.
-3. Planning Layer: generate atomic action objects.
-4. Policy Enforcement Layer: evaluate each action deterministically.
-5. Execution Layer: execute only allowed actions.
-6. Logging Layer: capture end-to-end trace.
-
-See docs/architecture.md for details and diagram.
+- **Structured intent model** — `StructuredIntent` constrains which action types are permitted per run
+- **Local policy enforcement** — directory scope, protected file tokens, command allow/deny lists
+- **Live ArmorIQ integration** — every plan is signed (`token_id`, `plan_hash`) and each action is verified (`verified_by: armoriq_api`)
+- **Bounded delegation** — `DelegationScope` grants sub-agents a strict subset of parent authority
+- **Full audit trail** — every stage logged to immutable JSONL with gate, reason, and trace ID
 
 ## Quick Start
 
-1. Open a terminal at project root.
-2. Run:
-
 ```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Add your ArmorIQ key to .env
+echo "ARMORIQ_API_KEY=your_key_here" > .env
+
+# Run the demo
 python demo/demo_run.py
 ```
 
-The demo prints policy decisions and generates an audit trace at:
+The demo runs three scenarios — cleanup, formatting, and commit message generation — showing both allowed and blocked actions with full gate reasoning.
 
-- demo/logs/demo_trace.jsonl
+## Demo Scenarios
 
-## LLM Reasoning Configuration
+| Scenario | Intent | Key Result |
+|----------|--------|------------|
+| Demo 1 | `project_cleanup` | DELETE /tmp ✅ · DELETE .env ❌ (local_policy) |
+| Demo 2 | `code_formatting` | black formatter ✅ · sudo ❌ (local_policy) |
+| Demo 3 | `generate_commit_message` | commit msg ✅ · DELETE ❌ (armorclaw) |
 
-`ReasoningLayer` now uses a real OpenAI-compatible JSON adapter when credentials
-are present, while keeping a deterministic fallback for offline reliability.
+## Delegation Demo
 
-Set the following environment variables to enable live LLM reasoning:
+```bash
+python demo/demo_delegation.py
+```
 
-- OPENAI_API_KEY: required API key
-- OPENAI_MODEL: optional model name (default: gpt-4o-mini)
-- OPENAI_BASE_URL: optional custom API base URL
+A `DelegatedSubAgent` receives format-only authority. Any attempt to delete files is blocked at Gate 4a before reaching policy or ArmorIQ.
+
+## Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `ARMORIQ_API_KEY` | ArmorIQ live API key (required for live verification) |
+| `ARMORIQ_USER_ID` | Agent user identity |
+| `ARMORIQ_AGENT_ID` | Agent identifier |
+| `OPENAI_API_KEY` | Optional — enables LLM-based reasoning (falls back to deterministic) |
